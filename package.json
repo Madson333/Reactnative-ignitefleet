@@ -20,6 +20,7 @@
     "expo": "~51.0.24",
     "expo-font": "~12.0.9",
     "expo-image": "~1.12.15",
+    "expo-location": "^17.0.1",
     "expo-status-bar": "~1.12.1",
     "phosphor-react-native": "^2.2.1",
     "react": "18.2.0",

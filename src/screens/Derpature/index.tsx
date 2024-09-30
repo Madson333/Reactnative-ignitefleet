@@ -1,9 +1,15 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components/button';
 import { Header } from '../../components/Header';
 import { LicensePlateInput } from '../../components/LicensePlateInput';
 import { TextAreaInput } from '../../components/TextAreaInput';
-import { Container, Content } from './styles';
+import {
+  useForegroundPermissions,
+  watchPositionAsync,
+  LocationAccuracy,
+  LocationSubscription
+} from 'expo-location';
+import { Container, Content, Message } from './styles';
 import {
   TextInput,
   ScrollView,
@@ -13,9 +19,13 @@ import {
 } from 'react-native';
 import { useRealm } from '../../libs/realm';
 import { licensePlateValidate } from '../../utils/LicensePlateValidate';
+import { getAddressLocation } from '../../utils/getAddressLocation';
 import { Historic } from '../../libs/realm/schemas/Historic';
 import { useUser } from '@realm/react';
 import { useNavigation } from '@react-navigation/native';
+import { Loading } from '../../components/Loading';
+import { LocationInfo } from '../../components/LocationInfo';
+import { Car } from 'phosphor-react-native';
 
 const keyboardAvoidingViewBehavior =
   Platform.OS === 'android' ? 'height' : 'position';
@@ -24,6 +34,12 @@ export function Derpature() {
   const [description, setDescription] = useState('');
   const [licensePlate, setLicensePlate] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+
+  const [locationForegroundPermission, requestLocationForegroundPermission] =
+    useForegroundPermissions();
+
   const { goBack } = useNavigation();
 
   const realm = useRealm();
@@ -73,6 +89,52 @@ export function Derpature() {
     }
   }
 
+  useEffect(() => {
+    requestLocationForegroundPermission();
+  }, []);
+
+  useEffect(() => {
+    if (!locationForegroundPermission?.granted) {
+      return;
+    }
+
+    let subscription: LocationSubscription;
+
+    watchPositionAsync(
+      {
+        accuracy: LocationAccuracy.High,
+        timeInterval: 1000
+      },
+      location => {
+        getAddressLocation(location.coords)
+          .then(address => {
+            if (address) {
+              setCurrentAddress(address);
+            }
+          })
+          .finally(() => setIsLoadingLocation(false));
+      }
+    ).then(response => (subscription = response));
+
+    if (subscription!) {
+      return () => subscription.remove();
+    }
+  }, [locationForegroundPermission]);
+
+  if (!locationForegroundPermission?.granted) {
+    <Container>
+      <Header title="Saída" />
+      <Message>
+        Você precisa permitir que o aplicativo tenha acesso a localização para
+        utilizar essa funcionlidade.
+      </Message>
+    </Container>;
+  }
+
+  if (isLoadingLocation) {
+    return <Loading />;
+  }
+
   return (
     <Container>
       <KeyboardAvoidingView
@@ -83,6 +145,14 @@ export function Derpature() {
           <Header title="Saída" />
 
           <Content>
+            {currentAddress && (
+              <LocationInfo
+                icon={Car}
+                label="Localização atual"
+                description={currentAddress}
+              />
+            )}
+
             <LicensePlateInput
               ref={licensePlateRef}
               label="Placa do veículo"
