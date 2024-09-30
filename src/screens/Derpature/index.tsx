@@ -7,7 +7,8 @@ import {
   useForegroundPermissions,
   watchPositionAsync,
   LocationAccuracy,
-  LocationSubscription
+  LocationSubscription,
+  LocationObjectCoords
 } from 'expo-location';
 import { Container, Content, Message } from './styles';
 import {
@@ -26,6 +27,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Loading } from '../../components/Loading';
 import { LocationInfo } from '../../components/LocationInfo';
 import { Car } from 'phosphor-react-native';
+import { Map } from '../../components/Map';
 
 const keyboardAvoidingViewBehavior =
   Platform.OS === 'android' ? 'height' : 'position';
@@ -36,6 +38,8 @@ export function Derpature() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+  const [currentCoords, setCurrentCoords] =
+    useState<LocationObjectCoords | null>(null);
 
   const [locationForegroundPermission, requestLocationForegroundPermission] =
     useForegroundPermissions();
@@ -106,6 +110,7 @@ export function Derpature() {
         timeInterval: 1000
       },
       location => {
+        setCurrentCoords(location.coords);
         getAddressLocation(location.coords)
           .then(address => {
             if (address) {
@@ -143,7 +148,7 @@ export function Derpature() {
       >
         <ScrollView>
           <Header title="Saída" />
-
+          {currentCoords && <Map coordinates={[currentCoords]} />}
           <Content>
             {currentAddress && (
               <LocationInfo
