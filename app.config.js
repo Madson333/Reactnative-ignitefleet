@@ -27,6 +27,9 @@ module.exports =  {
       "bundleIdentifier": "com.madsonsantos.ignitefleet",
       "config": {
         "googleMapsApiKey": process.env.GOOGLE_MAP_API_KEY
+      },
+      "infoPlist": {
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -39,7 +42,12 @@ module.exports =  {
           }
         }
       },
-      "package": "com.madsonsantos.ignitefleet"
+      "package": "com.madsonsantos.ignitefleet",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

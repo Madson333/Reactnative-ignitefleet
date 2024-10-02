@@ -5,6 +5,7 @@ import { LicensePlateInput } from '../../components/LicensePlateInput';
 import { TextAreaInput } from '../../components/TextAreaInput';
 import {
   useForegroundPermissions,
+  requestBackgroundPermissionsAsync,
   watchPositionAsync,
   LocationAccuracy,
   LocationSubscription,
@@ -28,6 +29,7 @@ import { Loading } from '../../components/Loading';
 import { LocationInfo } from '../../components/LocationInfo';
 import { Car } from 'phosphor-react-native';
 import { Map } from '../../components/Map';
+import { startLocationTask } from '../../tasks/backgroundTaskLocation';
 
 const keyboardAvoidingViewBehavior =
   Platform.OS === 'android' ? 'height' : 'position';
@@ -52,7 +54,7 @@ export function Derpature() {
   const descritionRef = useRef<TextInput>(null);
   const licensePlateRef = useRef<TextInput>(null);
 
-  function handleDepartureRegister() {
+  async function handleDepartureRegister() {
     try {
       if (!licensePlateValidate(licensePlate)) {
         licensePlateRef.current?.focus();
@@ -70,7 +72,26 @@ export function Derpature() {
         );
       }
 
+      if (!currentCoords?.latitude && !currentCoords?.longitude) {
+        return Alert.alert(
+          'Localização',
+          'Não foi possível encontar a localização atual, tente novamente.'
+        );
+      }
+
       setIsRegistering(true);
+
+      const backgroundPermissions = await requestBackgroundPermissionsAsync();
+
+      if (!backgroundPermissions.granted) {
+        setIsRegistering(false);
+        return Alert.alert(
+          'Localização',
+          'É necessário permitir que o App tenha acesso em segundo plano. Acesse as configurações e habilite "permitir o tempo todo".'
+        );
+      }
+
+      startLocationTask();
 
       realm.write(() => {
         realm.create(

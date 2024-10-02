@@ -15,6 +15,7 @@ import { useObject, useRealm } from '../../libs/realm';
 import { Historic } from '../../libs/realm/schemas/Historic';
 import { BSON } from 'realm';
 import { Alert } from 'react-native';
+import { stopLocationTask } from '../../tasks/backgroundTaskLocation';
 
 type RouteParamsProps = {
   id: string;
@@ -43,7 +44,7 @@ export function Arrival() {
     goBack();
   }
 
-  function handleArrivalRegister() {
+  async function handleArrivalRegister() {
     try {
       if (!historic) {
         return Alert.alert(
@@ -51,6 +52,8 @@ export function Arrival() {
           'Não foi possivel encontrar o registro de utilização do veículo.'
         );
       }
+
+      await stopLocationTask();
 
       realm.write(() => {
         historic.status = 'arrival';
